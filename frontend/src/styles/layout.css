@@ -1,0 +1,131 @@
+/* 布局与组件样式 */
+body {
+  margin: 0;
+  background: var(--color-bg-layout);
+  font-family: var(--font-family);
+  font-size: var(--font-size-base);
+  color: var(--color-text);
+}
+
+.app-layout {
+  min-height: 100vh;
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  height: 64px;
+  background: var(--color-bg-container);
+  border-bottom: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+  padding: 0 var(--space-lg);
+}
+
+.app-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  color: var(--color-bg-container);
+  background: linear-gradient(135deg, var(--color-primary), #69b1ff);
+  font-size: 16px;
+}
+
+.app-title {
+  margin: 0;
+}
+
+.app-content {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: var(--space-lg);
+}
+
+.workbench-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.gap-box {
+  height: var(--space-md);
+}
+
+.loading-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: var(--space-lg) 0;
+  color: var(--color-text-secondary);
+}
+
+.history-item {
+  cursor: pointer;
+  border-radius: var(--radius-md);
+  transition: background var(--transition);
+}
+
+.history-item:hover {
+  background: var(--color-primary-bg);
+}
+
+.audio-player {
+  width: 100%;
+}
+
+.history-toolbar {
+  margin-bottom: var(--space-md);
+}
+
+.star-active {
+  color: var(--color-warning);
+}
+
+.gallery-item {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--color-bg-container);
+  transition: box-shadow var(--transition), transform var(--transition);
+}
+
+.gallery-item:hover {
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-2px);
+}
+
+.gallery-media-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 160px;
+  background: var(--color-bg-layout);
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.gallery-media {
+  width: 100%;
+  height: 100%;
+}
+
+.gallery-media .ant-image-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.gallery-audio {
+  width: 90%;
+}
+
+.gallery-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-sm);
+}

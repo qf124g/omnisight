@@ -1,0 +1,20 @@
+/* 颜色主题变量：白底浅蓝 */
+:root {
+  --color-primary: #1677ff;
+  --color-primary-hover: #4096ff;
+  --color-primary-active: #0958d9;
+  --color-primary-bg: #e6f4ff;
+
+  --color-bg-layout: #f5f8fd;
+  --color-bg-container: #ffffff;
+
+  --color-border: #e8eef7;
+  --color-border-light: #f2f6fc;
+
+  --color-text: #1f2329;
+  --color-text-secondary: #6b7480;
+
+  --color-warning: #faad14;
+  --color-success: #52c41a;
+  --color-error: #ff4d4f;
+}

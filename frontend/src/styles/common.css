@@ -1,0 +1,5 @@
+/* 公共样式入口：统一收录各样式文件 */
+@import './colors.css';
+@import './variables.css';
+@import './text.css';
+@import './layout.css';

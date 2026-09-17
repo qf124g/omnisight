@@ -1,0 +1,13 @@
+/* 文字排版变量与公共样式 */
+:root {
+  --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-size-base: 14px;
+  --line-height-base: 1.8;
+}
+
+.result-text {
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: var(--line-height-base);
+}
