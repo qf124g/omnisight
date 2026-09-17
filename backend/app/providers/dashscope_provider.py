@@ -9,6 +9,8 @@ from typing import Generator
 
 import dashscope
 from dashscope import Generation, ImageSynthesis, MultiModalConversation
+from dashscope.audio.asr import Recognition
+from dashscope.audio.tts_v2 import SpeechSynthesizer
 
 from .. import config
 from .base import BaseProvider
@@ -20,6 +22,9 @@ class DashScopeProvider(BaseProvider):
     TEXT_MODEL = "qwen-plus"
     IMAGE_MODEL = "wanx-v1"
     VL_MODEL = "qwen-vl-plus"
+    TTS_MODEL = "cosyvoice-v3-flash"
+    TTS_VOICE = "longanyang"
+    ASR_MODEL = "paraformer-realtime-v2"
 
     def __init__(self) -> None:
         dashscope.api_key = config.DASHSCOPE_API_KEY
@@ -79,6 +84,25 @@ class DashScopeProvider(BaseProvider):
             return self._extract_vl_text(response.output.choices[0].message.content)
         raise RuntimeError(f"图生文调用失败: {response.code} {response.message}")
 
+    def text_to_speech(self, text: str) -> str:
+        """文生语音：调用 CosyVoice 合成语音并保存为本地 mp3。"""
+        synthesizer = SpeechSynthesizer(model=self.TTS_MODEL, voice=self.TTS_VOICE)
+        audio = synthesizer.call(text)
+        return self._save_audio(audio)
+
+    def speech_to_text(self, audio_local_path: str, audio_format: str, sample_rate: int) -> str:
+        """语音识别：直接传入本地音频文件路径与采样率进行识别。"""
+        recognition = Recognition(
+            model=self.ASR_MODEL,
+            format=audio_format,
+            sample_rate=sample_rate,
+            callback=None,
+        )
+        result = recognition.call(audio_local_path)
+        if result.status_code == HTTPStatus.OK:
+            return self._extract_asr_text(result)
+        raise RuntimeError(f"语音识别调用失败: {result.message}")
+
     @staticmethod
     def _extract_vl_text(content) -> str:
         """千问 VL 的 content 可能是字符串也可能是分段列表。"""
@@ -87,6 +111,24 @@ class DashScopeProvider(BaseProvider):
         if isinstance(content, list):
             return "".join(item.get("text", "") for item in content if isinstance(item, dict))
         return str(content)
+
+    @staticmethod
+    def _extract_asr_text(result) -> str:
+        """从语音识别结果中提取文本（同步识别返回的是句子列表）。"""
+        sentences = result.get_sentence()
+        if not sentences:
+            return ""
+        return "".join(s.get("text", "") for s in sentences if isinstance(s, dict))
+
+    @staticmethod
+    def _save_audio(audio: bytes) -> str:
+        """把合成出的音频字节写入本地输出目录，返回绝对路径。"""
+        os.makedirs(config.OUTPUT_DIR, exist_ok=True)
+        filename = f"{uuid.uuid4().hex}.mp3"
+        local_path = os.path.join(config.OUTPUT_DIR, filename)
+        with open(local_path, "wb") as f:
+            f.write(audio)
+        return local_path
 
     @staticmethod
     def _download_image(url: str) -> str:

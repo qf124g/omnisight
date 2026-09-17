@@ -4,11 +4,19 @@ export async function generate(
   mode: Mode,
   prompt: string,
   imageBase64?: string,
+  audioBase64?: string,
+  sampleRate?: number,
 ): Promise<TaskRecord> {
   const res = await fetch('/api/generate', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ mode, prompt, image_base64: imageBase64 }),
+    body: JSON.stringify({
+      mode,
+      prompt,
+      image_base64: imageBase64,
+      audio_base64: audioBase64,
+      sample_rate: sampleRate,
+    }),
   })
   if (!res.ok) {
     const err = await res.json().catch(() => null)
@@ -19,6 +27,15 @@ export async function generate(
 
 export async function listTasks(): Promise<TaskRecord[]> {
   const res = await fetch('/api/tasks')
+  return res.json()
+}
+
+export async function toggleFavorite(taskId: number): Promise<TaskRecord> {
+  const res = await fetch(`/api/tasks/${taskId}/favorite`, { method: 'POST' })
+  if (!res.ok) {
+    const err = await res.json().catch(() => null)
+    throw new Error(err?.detail || `请求失败: ${res.status}`)
+  }
   return res.json()
 }
 

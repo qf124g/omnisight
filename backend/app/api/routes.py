@@ -38,7 +38,7 @@ def get_db():
 @router.post("/generate", response_model=TaskResponse)
 def generate(req: GenerateRequest) -> TaskResponse:
     """提交一个生成任务，立即返回任务 id，由后台线程异步处理。"""
-    if req.mode not in ("text", "image", "image_to_text"):
+    if req.mode not in ("text", "image", "image_to_text", "tts", "asr"):
         raise HTTPException(status_code=400, detail="不支持的生成类型")
 
     image_local_path = None
@@ -47,7 +47,23 @@ def generate(req: GenerateRequest) -> TaskResponse:
             raise HTTPException(status_code=400, detail="图片理解需要上传图片")
         image_local_path = _save_base64_image(req.image_base64)
 
-    task_id = service.create_task(req.mode, req.prompt, image_local_path=image_local_path)
+    audio_local_path = None
+    audio_format = "wav"
+    if req.mode == "asr":
+        if not req.audio_base64:
+            raise HTTPException(status_code=400, detail="语音识别需要上传音频")
+        if req.sample_rate is None:
+            raise HTTPException(status_code=400, detail="语音识别需要提供音频采样率")
+        audio_local_path, audio_format = _save_base64_audio(req.audio_base64)
+
+    task_id = service.create_task(
+        req.mode,
+        req.prompt,
+        image_local_path=image_local_path,
+        audio_local_path=audio_local_path,
+        audio_format=audio_format,
+        sample_rate=req.sample_rate,
+    )
     return _to_task_response(task_id)
 
 
@@ -69,6 +85,18 @@ def get_task(task_id: int, db: Session = Depends(get_db)) -> TaskResponse:
     record = db.get(GenerationRecord, task_id)
     if record is None:
         raise HTTPException(status_code=404, detail="任务不存在")
+    return _record_to_response(record)
+
+
+@router.post("/tasks/{task_id}/favorite", response_model=TaskResponse)
+def toggle_favorite(task_id: int, db: Session = Depends(get_db)) -> TaskResponse:
+    """切换某条记录的收藏状态，返回更新后的记录。"""
+    record = db.get(GenerationRecord, task_id)
+    if record is None:
+        raise HTTPException(status_code=404, detail="任务不存在")
+    record.is_favorite = not record.is_favorite
+    db.commit()
+    db.refresh(record)
     return _record_to_response(record)
 
 
@@ -127,6 +155,31 @@ def _save_base64_image(data_url: str) -> str:
     return path
 
 
+# 音频 MIME 类型到 (文件扩展名, 识别格式) 的映射
+AUDIO_MIME_MAP = {
+    "audio/wav": (".wav", "wav"),
+    "audio/x-wav": (".wav", "wav"),
+    "audio/mpeg": (".mp3", "mp3"),
+    "audio/mp4": (".m4a", "m4a"),
+    "audio/webm": (".webm", "webm"),
+    "audio/ogg": (".ogg", "ogg"),
+}
+
+
+def _save_base64_audio(data_url: str):
+    """把前端传来的 base64 音频 data URL 保存为本地文件，返回 (绝对路径, 格式)。"""
+    mime = data_url.split(";", 1)[0].split(":", 1)[1]
+    if mime not in AUDIO_MIME_MAP:
+        raise HTTPException(status_code=400, detail=f"不支持的音频格式: {mime}")
+    ext, audio_format = AUDIO_MIME_MAP[mime]
+    raw = base64.b64decode(data_url.split(",", 1)[1])
+    os.makedirs(config.UPLOAD_DIR, exist_ok=True)
+    path = os.path.join(config.UPLOAD_DIR, f"{uuid.uuid4().hex}{ext}")
+    with open(path, "wb") as f:
+        f.write(raw)
+    return path, audio_format
+
+
 def _record_to_response(r: GenerationRecord) -> TaskResponse:
     return TaskResponse(
         id=r.id,
@@ -136,6 +189,7 @@ def _record_to_response(r: GenerationRecord) -> TaskResponse:
         result_text=r.result_text,
         result_url=r.result_url,
         error=r.error,
+        is_favorite=r.is_favorite,
         created_at=r.created_at,
     )
 

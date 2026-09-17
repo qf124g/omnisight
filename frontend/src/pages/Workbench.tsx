@@ -3,7 +3,7 @@ import { Col, Row } from 'antd'
 import InputPanel from '../components/InputPanel'
 import ResultPanel from '../components/ResultPanel'
 import HistoryList from '../components/HistoryList'
-import { generate, listTasks, streamTask } from '../api'
+import { generate, listTasks, streamTask, toggleFavorite } from '../api'
 import type { Mode, TaskRecord } from '../types'
 
 interface ActiveTask {
@@ -19,6 +19,8 @@ function Workbench() {
   const [mode, setMode] = useState<Mode>('text')
   const [prompt, setPrompt] = useState('')
   const [imageBase64, setImageBase64] = useState<string | null>(null)
+  const [audioBase64, setAudioBase64] = useState<string | null>(null)
+  const [audioSampleRate, setAudioSampleRate] = useState<number | null>(null)
   const [active, setActive] = useState<ActiveTask | null>(null)
   const [history, setHistory] = useState<TaskRecord[]>([])
   const stopRef = useRef<(() => void) | null>(null)
@@ -39,13 +41,15 @@ function Workbench() {
   const loading = active !== null && !active.done && active.status !== 'error'
 
   const onGenerate = async () => {
-    if (!prompt.trim()) return
+    if (!prompt.trim() && mode !== 'asr') return
     if (mode === 'image_to_text' && !imageBase64) return
+    if (mode === 'asr' && !audioBase64) return
+    if (mode === 'asr' && !audioSampleRate) return
 
     stopRef.current?.()
 
     try {
-      const task = await generate(mode, prompt, imageBase64 ?? undefined)
+      const task = await generate(mode, prompt, imageBase64 ?? undefined, audioBase64 ?? undefined, audioSampleRate ?? undefined)
       setActive({
         taskId: task.id,
         status: 'pending',
@@ -110,9 +114,17 @@ function Workbench() {
     setMode(item.mode)
   }
 
+  const onToggleFavorite = async (id: number) => {
+    await toggleFavorite(id)
+    refreshHistory()
+  }
+
   const onModeChange = (m: Mode) => {
     setMode(m)
     setActive(null)
+    setImageBase64(null)
+    setAudioBase64(null)
+    setAudioSampleRate(null)
   }
 
   return (
@@ -125,13 +137,15 @@ function Workbench() {
           onModeChange={onModeChange}
           onPromptChange={setPrompt}
           onImageBase64Change={setImageBase64}
+          onAudioBase64Change={setAudioBase64}
+          onAudioSampleRateChange={setAudioSampleRate}
           onGenerate={onGenerate}
         />
         <div className="gap-box" />
         <ResultPanel mode={mode} active={active} />
       </Col>
       <Col xs={24} lg={12}>
-        <HistoryList history={history} onSelect={onSelectHistory} />
+        <HistoryList history={history} onSelect={onSelectHistory} onToggleFavorite={onToggleFavorite} />
       </Col>
     </Row>
   )

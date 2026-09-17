@@ -21,6 +21,9 @@ class GenerationService:
         mode: str,
         prompt: str,
         image_local_path: Optional[str] = None,
+        audio_local_path: Optional[str] = None,
+        audio_format: str = "wav",
+        sample_rate: Optional[int] = None,
     ) -> int:
         """创建任务记录并启动后台线程执行，返回任务 id。"""
         db = SessionLocal()
@@ -32,13 +35,22 @@ class GenerationService:
 
         thread = threading.Thread(
             target=self._run,
-            args=(task_id, mode, prompt, image_local_path),
+            args=(task_id, mode, prompt, image_local_path, audio_local_path, audio_format, sample_rate),
             daemon=True,
         )
         thread.start()
         return task_id
 
-    def _run(self, task_id: int, mode: str, prompt: str, image_local_path: Optional[str]) -> None:
+    def _run(
+        self,
+        task_id: int,
+        mode: str,
+        prompt: str,
+        image_local_path: Optional[str],
+        audio_local_path: Optional[str],
+        audio_format: str,
+        sample_rate: Optional[int],
+    ) -> None:
         db = SessionLocal()
         record = db.get(GenerationRecord, task_id)
         record.status = "running"
@@ -51,6 +63,10 @@ class GenerationService:
                 self._run_image(db, record, prompt)
             elif mode == "image_to_text":
                 self._run_image_to_text(db, record, image_local_path or "", prompt)
+            elif mode == "tts":
+                self._run_tts(db, record, prompt)
+            elif mode == "asr":
+                self._run_asr(db, record, audio_local_path or "", audio_format, sample_rate)
         except Exception as exc:  # noqa: BLE001
             record.status = "error"
             record.error = str(exc)
@@ -79,6 +95,21 @@ class GenerationService:
 
     def _run_image_to_text(self, db, record: GenerationRecord, image_local_path: str, prompt: str) -> None:
         result = self._provider.image_to_text(image_local_path, prompt)
+        record.result_text = result
+        record.status = "done"
+        db.commit()
+        event_bus.publish(record.id, {"type": "done", "result_text": result})
+
+    def _run_tts(self, db, record: GenerationRecord, prompt: str) -> None:
+        local_path = self._provider.text_to_speech(prompt)
+        filename = os.path.basename(local_path)
+        record.result_url = f"/outputs/{filename}"
+        record.status = "done"
+        db.commit()
+        event_bus.publish(record.id, {"type": "done", "result_url": record.result_url})
+
+    def _run_asr(self, db, record: GenerationRecord, audio_local_path: str, audio_format: str, sample_rate: int) -> None:
+        result = self._provider.speech_to_text(audio_local_path, audio_format, sample_rate)
         record.result_text = result
         record.status = "done"
         db.commit()

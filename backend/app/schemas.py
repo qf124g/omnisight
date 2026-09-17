@@ -9,9 +9,11 @@ from pydantic import BaseModel
 class GenerateRequest(BaseModel):
     """创建生成任务的请求体。"""
 
-    mode: str  # text / image / image_to_text
+    mode: str  # text / image / image_to_text / tts / asr
     prompt: str = ""
     image_base64: Optional[str] = None  # 图生文模式下的图片（data URL）
+    audio_base64: Optional[str] = None  # 语音识别模式下的音频（data URL）
+    sample_rate: Optional[int] = None  # 语音识别音频的采样率（Hz），由前端解码音频获得
 
 
 class TaskResponse(BaseModel):
@@ -24,4 +26,5 @@ class TaskResponse(BaseModel):
     result_text: Optional[str] = None
     result_url: Optional[str] = None
     error: Optional[str] = None
+    is_favorite: bool = False
     created_at: datetime

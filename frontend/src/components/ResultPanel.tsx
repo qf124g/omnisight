@@ -42,6 +42,21 @@ function ResultPanel({ mode, active }: Props) {
       return <Empty description="暂无图片" />
     }
 
+    if (mode === 'tts') {
+      if (active.resultUrl) {
+        return <audio controls src={active.resultUrl} className="audio-player" />
+      }
+      if (loading) {
+        return (
+          <div className="loading-box">
+            <Spin />
+            <span>语音合成中...</span>
+          </div>
+        )
+      }
+      return <Empty description="暂无音频" />
+    }
+
     if (active.resultText) {
       return (
         <Typography.Paragraph className="result-text">

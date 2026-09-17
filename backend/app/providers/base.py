@@ -18,3 +18,11 @@ class BaseProvider(ABC):
     @abstractmethod
     def image_to_text(self, image_local_path: str, prompt: str) -> str:
         """图生文：传入本地图片绝对路径，返回理解结果文本。"""
+
+    @abstractmethod
+    def text_to_speech(self, text: str) -> str:
+        """文生语音：传入文本，返回本地音频文件的绝对路径。"""
+
+    @abstractmethod
+    def speech_to_text(self, audio_local_path: str, audio_format: str, sample_rate: int) -> str:
+        """语音识别：传入本地音频绝对路径、格式与采样率，返回识别出的文本。"""

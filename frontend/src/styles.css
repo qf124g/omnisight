@@ -48,3 +48,46 @@ body {
 .history-item {
   cursor: pointer;
 }
+
+.audio-player {
+  width: 100%;
+}
+
+.history-toolbar {
+  margin-bottom: 16px;
+}
+
+.star-active {
+  color: #faad14;
+}
+
+.gallery-item {
+  border: 1px solid #e8eef7;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.gallery-media-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 120px;
+  background: #f5f8fd;
+  cursor: pointer;
+}
+
+.gallery-media {
+  max-width: 100%;
+}
+
+.gallery-audio {
+  width: 100%;
+}
+
+.gallery-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px;
+}
