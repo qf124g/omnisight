@@ -63,6 +63,7 @@ def generate(req: GenerateRequest) -> TaskResponse:
         audio_local_path=audio_local_path,
         audio_format=audio_format,
         sample_rate=req.sample_rate,
+        language_hints=req.language_hints,
     )
     return _to_task_response(task_id)
 

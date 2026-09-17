@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """模型提供方抽象接口，业务层只依赖这里，不直接依赖具体 SDK。"""
 from abc import ABC, abstractmethod
-from typing import Generator
+from typing import Generator, List, Optional
 
 
 class BaseProvider(ABC):
@@ -24,5 +24,5 @@ class BaseProvider(ABC):
         """文生语音：传入文本，返回本地音频文件的绝对路径。"""
 
     @abstractmethod
-    def speech_to_text(self, audio_local_path: str, audio_format: str, sample_rate: int) -> str:
-        """语音识别：传入本地音频绝对路径、格式与采样率，返回识别出的文本。"""
+    def speech_to_text(self, audio_local_path: str, audio_format: str, sample_rate: int, language_hints: Optional[List[str]] = None) -> str:
+        """语音识别：传入本地音频绝对路径、格式、采样率与语种提示，返回识别出的文本。"""

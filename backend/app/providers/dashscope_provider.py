@@ -5,7 +5,7 @@ import time
 import uuid
 import urllib.request
 from http import HTTPStatus
-from typing import Generator
+from typing import Generator, List, Optional
 
 import dashscope
 from dashscope import Generation, ImageSynthesis, MultiModalConversation
@@ -90,12 +90,13 @@ class DashScopeProvider(BaseProvider):
         audio = synthesizer.call(text)
         return self._save_audio(audio)
 
-    def speech_to_text(self, audio_local_path: str, audio_format: str, sample_rate: int) -> str:
-        """语音识别：直接传入本地音频文件路径与采样率进行识别。"""
+    def speech_to_text(self, audio_local_path: str, audio_format: str, sample_rate: int, language_hints: Optional[List[str]] = None) -> str:
+        """语音识别：直接传入本地音频文件路径、采样率与语种提示进行识别。"""
         recognition = Recognition(
             model=self.ASR_MODEL,
             format=audio_format,
             sample_rate=sample_rate,
+            language_hints=language_hints,
             callback=None,
         )
         result = recognition.call(audio_local_path)

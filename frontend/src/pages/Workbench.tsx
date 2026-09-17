@@ -21,6 +21,7 @@ function Workbench() {
   const [imageBase64, setImageBase64] = useState<string | null>(null)
   const [audioBase64, setAudioBase64] = useState<string | null>(null)
   const [audioSampleRate, setAudioSampleRate] = useState<number | null>(null)
+  const [language, setLanguage] = useState('auto')
   const [active, setActive] = useState<ActiveTask | null>(null)
   const [history, setHistory] = useState<TaskRecord[]>([])
   const stopRef = useRef<(() => void) | null>(null)
@@ -47,9 +48,10 @@ function Workbench() {
     if (mode === 'asr' && !audioSampleRate) return
 
     stopRef.current?.()
+    const languageHints = mode === 'asr' && language !== 'auto' ? [language] : undefined
 
     try {
-      const task = await generate(mode, prompt, imageBase64 ?? undefined, audioBase64 ?? undefined, audioSampleRate ?? undefined)
+      const task = await generate(mode, prompt, imageBase64 ?? undefined, audioBase64 ?? undefined, audioSampleRate ?? undefined, languageHints)
       setActive({
         taskId: task.id,
         status: 'pending',
@@ -125,6 +127,7 @@ function Workbench() {
     setImageBase64(null)
     setAudioBase64(null)
     setAudioSampleRate(null)
+    setLanguage('auto')
   }
 
   return (
@@ -139,6 +142,8 @@ function Workbench() {
           onImageBase64Change={setImageBase64}
           onAudioBase64Change={setAudioBase64}
           onAudioSampleRateChange={setAudioSampleRate}
+          language={language}
+          onLanguageChange={setLanguage}
           onGenerate={onGenerate}
         />
         <div className="gap-box" />

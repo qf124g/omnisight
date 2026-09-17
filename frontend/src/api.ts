@@ -6,6 +6,7 @@ export async function generate(
   imageBase64?: string,
   audioBase64?: string,
   sampleRate?: number,
+  languageHints?: string[],
 ): Promise<TaskRecord> {
   const res = await fetch('/api/generate', {
     method: 'POST',
@@ -16,6 +17,7 @@ export async function generate(
       image_base64: imageBase64,
       audio_base64: audioBase64,
       sample_rate: sampleRate,
+      language_hints: languageHints,
     }),
   })
   if (!res.ok) {

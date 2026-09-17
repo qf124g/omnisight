@@ -2,7 +2,7 @@
 """生成任务的业务编排：创建记录、后台执行、状态流转与结果落库。"""
 import os
 import threading
-from typing import Optional
+from typing import List, Optional
 
 from ..database import SessionLocal
 from ..models import GenerationRecord
@@ -24,6 +24,7 @@ class GenerationService:
         audio_local_path: Optional[str] = None,
         audio_format: str = "wav",
         sample_rate: Optional[int] = None,
+        language_hints: Optional[List[str]] = None,
     ) -> int:
         """创建任务记录并启动后台线程执行，返回任务 id。"""
         db = SessionLocal()
@@ -35,7 +36,7 @@ class GenerationService:
 
         thread = threading.Thread(
             target=self._run,
-            args=(task_id, mode, prompt, image_local_path, audio_local_path, audio_format, sample_rate),
+            args=(task_id, mode, prompt, image_local_path, audio_local_path, audio_format, sample_rate, language_hints),
             daemon=True,
         )
         thread.start()
@@ -50,6 +51,7 @@ class GenerationService:
         audio_local_path: Optional[str],
         audio_format: str,
         sample_rate: Optional[int],
+        language_hints: Optional[List[str]],
     ) -> None:
         db = SessionLocal()
         record = db.get(GenerationRecord, task_id)
@@ -66,7 +68,7 @@ class GenerationService:
             elif mode == "tts":
                 self._run_tts(db, record, prompt)
             elif mode == "asr":
-                self._run_asr(db, record, audio_local_path or "", audio_format, sample_rate)
+                self._run_asr(db, record, audio_local_path or "", audio_format, sample_rate, language_hints)
         except Exception as exc:  # noqa: BLE001
             record.status = "error"
             record.error = str(exc)
@@ -108,8 +110,8 @@ class GenerationService:
         db.commit()
         event_bus.publish(record.id, {"type": "done", "result_url": record.result_url})
 
-    def _run_asr(self, db, record: GenerationRecord, audio_local_path: str, audio_format: str, sample_rate: int) -> None:
-        result = self._provider.speech_to_text(audio_local_path, audio_format, sample_rate)
+    def _run_asr(self, db, record: GenerationRecord, audio_local_path: str, audio_format: str, sample_rate: int, language_hints: Optional[List[str]]) -> None:
+        result = self._provider.speech_to_text(audio_local_path, audio_format, sample_rate, language_hints)
         record.result_text = result
         record.status = "done"
         db.commit()
