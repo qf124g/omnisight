@@ -1,15 +1,24 @@
-import { useState } from 'react'
-import { Button, Card, Input, Segmented, Select, Upload, message } from 'antd'
-import { AudioOutlined, InboxOutlined } from '@ant-design/icons'
+import { useEffect, useState, type ReactNode } from 'react'
+import { Button, Dropdown, Input, Select, Upload, message } from 'antd'
+import {
+  AppstoreOutlined,
+  AudioOutlined,
+  CloseOutlined,
+  EyeOutlined,
+  FileTextOutlined,
+  PictureOutlined,
+  SendOutlined,
+  SoundOutlined,
+} from '@ant-design/icons'
 import type { UploadFile } from 'antd'
 import type { Mode } from '../types'
 
-const MODES: { label: string; value: Mode }[] = [
-  { label: '文本生成', value: 'text' },
-  { label: '图片生成', value: 'image' },
-  { label: '图片理解', value: 'image_to_text' },
-  { label: '语音合成', value: 'tts' },
-  { label: '语音识别', value: 'asr' },
+const MODES: { label: string; value: Mode; icon: ReactNode }[] = [
+  { label: '文本生成', value: 'text', icon: <FileTextOutlined /> },
+  { label: '图片生成', value: 'image', icon: <PictureOutlined /> },
+  { label: '图片理解', value: 'image_to_text', icon: <EyeOutlined /> },
+  { label: '语音合成', value: 'tts', icon: <SoundOutlined /> },
+  { label: '语音识别', value: 'asr', icon: <AudioOutlined /> },
 ]
 
 const ASR_LANGUAGES: { label: string; value: string }[] = [
@@ -29,7 +38,7 @@ const PLACEHOLDER: Record<Mode, string> = {
   image: '描述你想生成的画面，例如：一只坐在窗边的橘猫，阳光洒落',
   image_to_text: '输入你想了解图片的问题，例如：这张图里有什么？',
   tts: '输入要合成语音的文本，例如：你好，欢迎使用多模态工作台',
-  asr: '上传音频后点击生成，可输入提示语（可选）',
+  asr: '上传音频后点击发送，可输入提示语（可选）',
 }
 
 // 将解码后的音频统一编码为 16-bit PCM 单声道 WAV，避免识别服务无法解码高采样率或高位深音频
@@ -101,6 +110,12 @@ function InputPanel({
   const [imageFileList, setImageFileList] = useState<UploadFile[]>([])
   const [audioFileList, setAudioFileList] = useState<UploadFile[]>([])
 
+  // 切换模式时清空已上传附件
+  useEffect(() => {
+    setImageFileList([])
+    setAudioFileList([])
+  }, [mode])
+
   const handleImageChange = ({ fileList: list }: { fileList: UploadFile[] }) => {
     const latest = list.slice(-1)
     setImageFileList(latest)
@@ -159,65 +174,109 @@ function InputPanel({
     }
   }
 
+  const handleRemoveImage = () => {
+    setImageFileList([])
+    onImageBase64Change(null)
+  }
+
+  const handleRemoveAudio = () => {
+    setAudioFileList([])
+    onAudioBase64Change(null)
+    onAudioSampleRateChange(null)
+  }
+
+  const showImageAttachment = mode === 'image_to_text' && Boolean(imageFileList[0])
+  const showAudioAttachment = mode === 'asr' && Boolean(audioFileList[0])
+
   return (
-    <Card title="创作">
-      <div className="workbench-form">
-        <Segmented
-          block
-          options={MODES}
-          value={mode}
-          onChange={(value) => onModeChange(value as Mode)}
-        />
-
-        {mode === 'image_to_text' && (
-          <Upload.Dragger
-            maxCount={1}
-            fileList={imageFileList}
-            beforeUpload={() => false}
-            onChange={handleImageChange}
-            listType="picture"
-          >
-            <p className="ant-upload-drag-icon">
-              <InboxOutlined />
-            </p>
-            <p className="ant-upload-text">点击或拖拽图片到此处</p>
-          </Upload.Dragger>
+    <div className="chat-input-area">
+      <div className="chat-input-box">
+        {(showImageAttachment || showAudioAttachment) && (
+          <div className="chat-attachments">
+            {showImageAttachment && (
+              <span className="chat-attachment">
+                <PictureOutlined className="chat-attachment-icon" />
+                <span className="chat-attachment-name">{imageFileList[0]?.name}</span>
+                <Button type="text" size="small" icon={<CloseOutlined />} onClick={handleRemoveImage} />
+              </span>
+            )}
+            {showAudioAttachment && (
+              <span className="chat-attachment">
+                <AudioOutlined className="chat-attachment-icon" />
+                <span className="chat-attachment-name">{audioFileList[0]?.name}</span>
+                <Button type="text" size="small" icon={<CloseOutlined />} onClick={handleRemoveAudio} />
+              </span>
+            )}
+          </div>
         )}
-
-        {mode === 'asr' && (
-          <>
+        <Input.TextArea
+          className="chat-textarea"
+          value={prompt}
+          onChange={(e) => onPromptChange(e.target.value)}
+          placeholder={PLACEHOLDER[mode]}
+          autoSize={{ minRows: 2, maxRows: 8 }}
+          onPressEnter={(e) => {
+            if (!e.shiftKey) {
+              e.preventDefault()
+              onGenerate()
+            }
+          }}
+        />
+        <div className="chat-input-actions">
+          <Dropdown
+            trigger={['click']}
+            menu={{
+              items: MODES.map((m) => ({ key: m.value, icon: m.icon, label: m.label })),
+              selectedKeys: [mode],
+              onClick: ({ key }) => onModeChange(key as Mode),
+            }}
+          >
+            <Button type="text" icon={<AppstoreOutlined />} title="选择模式" />
+          </Dropdown>
+          {mode === 'image_to_text' && (
+            <Upload
+              accept="image/*"
+              maxCount={1}
+              fileList={imageFileList}
+              showUploadList={false}
+              beforeUpload={() => false}
+              onChange={handleImageChange}
+            >
+              <Button type="text" icon={<PictureOutlined />} disabled={loading} />
+            </Upload>
+          )}
+          {mode === 'asr' && (
+            <Upload
+              accept="audio/*"
+              maxCount={1}
+              fileList={audioFileList}
+              showUploadList={false}
+              beforeUpload={() => false}
+              onChange={handleAudioChange}
+            >
+              <Button type="text" icon={<AudioOutlined />} disabled={loading} />
+            </Upload>
+          )}
+          {mode === 'asr' && (
             <Select
+              className="chat-lang-select"
+              size="small"
               value={language}
               onChange={onLanguageChange}
               options={ASR_LANGUAGES}
             />
-            <Upload.Dragger
-              maxCount={1}
-              fileList={audioFileList}
-              beforeUpload={() => false}
-              onChange={handleAudioChange}
-              accept="audio/*"
-            >
-              <p className="ant-upload-drag-icon">
-                <AudioOutlined />
-              </p>
-              <p className="ant-upload-text">点击或拖拽音频到此处（支持 wav/mp3 等）</p>
-            </Upload.Dragger>
-          </>
-        )}
-
-        <Input.TextArea
-          value={prompt}
-          onChange={(e) => onPromptChange(e.target.value)}
-          placeholder={PLACEHOLDER[mode]}
-          autoSize={{ minRows: 4, maxRows: 10 }}
-        />
-
-        <Button block type="primary" onClick={onGenerate} loading={loading}>
-          生成
-        </Button>
+          )}
+          <Button
+            className="chat-send"
+            type="primary"
+            shape="circle"
+            icon={<SendOutlined />}
+            onClick={onGenerate}
+            loading={loading}
+          />
+        </div>
       </div>
-    </Card>
+    </div>
   )
 }
 

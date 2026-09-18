@@ -13,3 +13,14 @@ export interface TaskRecord {
   is_favorite: boolean
   created_at: string
 }
+
+export interface ChatMessage {
+  id: string
+  role: 'user' | 'assistant'
+  mode: Mode
+  text: string
+  imageUrl?: string
+  audioUrl?: string
+  status?: TaskStatus
+  error?: string
+}

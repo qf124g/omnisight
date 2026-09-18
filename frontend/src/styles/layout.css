@@ -8,7 +8,10 @@ body {
 }
 
 .app-layout {
-  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
 }
 
 .app-header {
@@ -39,28 +42,159 @@ body {
 }
 
 .app-content {
-  width: 100%;
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: var(--space-lg);
+  display: flex;
+  flex: 1;
+  min-height: 0;
 }
 
-.workbench-form {
+.chat-container {
   display: flex;
+  flex: 1;
+  flex-direction: column;
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 var(--space-lg);
+}
+
+.chat-messages {
+  display: flex;
+  flex: 1;
   flex-direction: column;
   gap: var(--space-md);
+  overflow-y: auto;
+  min-height: 0;
+  padding: var(--space-lg) 0;
 }
 
-.gap-box {
-  height: var(--space-md);
+.chat-empty {
+  margin: 20vh auto 0;
+  text-align: center;
+}
+
+.chat-input-area {
+  padding-bottom: var(--space-lg);
+}
+
+.chat-input-box {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-container);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-md);
+}
+
+.chat-textarea.ant-input {
+  border: none;
+  box-shadow: none;
+  resize: none;
+  background: transparent;
+  padding: 4px;
+}
+
+.chat-input-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.chat-attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+.chat-attachment {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  max-width: 100%;
+  padding: 4px var(--space-sm);
+  background: var(--color-bg-layout);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.chat-attachment-icon {
+  color: var(--color-text-secondary);
+}
+
+.chat-attachment-name {
+  max-width: 200px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.chat-send {
+  margin-left: auto;
+}
+
+.chat-lang-select {
+  width: 110px;
 }
 
 .loading-box {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: var(--space-lg) 0;
+  padding: var(--space-md) 0;
   color: var(--color-text-secondary);
+}
+
+.msg-row {
+  display: flex;
+}
+
+.msg-row.is-user {
+  justify-content: flex-end;
+}
+
+.msg-row.is-assistant {
+  justify-content: flex-start;
+}
+
+.msg-bubble {
+  max-width: 78%;
+  border-radius: var(--radius-lg);
+  padding: var(--space-sm) var(--space-md);
+  word-break: break-word;
+}
+
+.msg-user {
+  background: var(--color-primary);
+  color: var(--color-bg-container);
+}
+
+.msg-assistant {
+  background: var(--color-bg-container);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+}
+
+.msg-user-text {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.msg-image {
+  width: 200px;
+}
+
+.msg-image .ant-image-img {
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-md);
+}
+
+.msg-audio {
+  width: 240px;
+  max-width: 100%;
 }
 
 .history-item {
@@ -77,55 +211,14 @@ body {
   width: 100%;
 }
 
-.history-toolbar {
-  margin-bottom: var(--space-md);
-}
-
 .star-active {
   color: var(--color-warning);
 }
 
-.gallery-item {
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  background: var(--color-bg-container);
-  transition: box-shadow var(--transition), transform var(--transition);
-}
-
-.gallery-item:hover {
-  box-shadow: var(--shadow-hover);
-  transform: translateY(-2px);
-}
-
-.gallery-media-box {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 160px;
-  background: var(--color-bg-layout);
-  cursor: pointer;
-  overflow: hidden;
-}
-
-.gallery-media {
-  width: 100%;
-  height: 100%;
-}
-
-.gallery-media .ant-image-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.gallery-audio {
-  width: 90%;
-}
-
-.gallery-meta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--space-sm);
+.history-fab {
+  position: fixed;
+  right: var(--space-lg);
+  bottom: var(--space-lg);
+  box-shadow: var(--shadow-md);
+  z-index: 1000;
 }
